@@ -3,20 +3,26 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     Rigidbody2D rb;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    public float speed = 5f;
+
     void Start()
-    {   
+    {
         rb = GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
-        if(Input.GetKey(KeyCode.RightArrow))
+        float moveX = 0f;
+
+        if (Input.GetKey(KeyCode.RightArrow))
         {
-            rb.linearVelocityX = 5;
+            moveX = speed;
         }
-        rb.linearVelocityX = 0 ;
+        else if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            moveX = -speed;
+        }
+
+        rb.linearVelocity = new Vector2(moveX, rb.linearVelocity.y);
     }
 }
