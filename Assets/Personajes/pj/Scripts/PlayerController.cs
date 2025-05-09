@@ -3,26 +3,45 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     Rigidbody2D rb;
-    public float speed = 5f;
+    SpriteRenderer sr;
+    Animator animator;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        sr = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
     }
 
     void Update()
     {
-        float moveX = 0f;
+       MoverseHorizontal();
+       Saltar();
+    }
+
+    void MoverseHorizontal()
+    {
+        rb.linearVelocityX = 0;
+        animator.SetInteger("Estado",0);
 
         if (Input.GetKey(KeyCode.RightArrow))
         {
-            moveX = speed;
+            rb.linearVelocityX = 10;
+            sr.flipX = false;
+            animator.SetInteger("Estado",1);
         }
-        else if (Input.GetKey(KeyCode.LeftArrow))
+         if (Input.GetKey(KeyCode.LeftArrow))
         {
-            moveX = -speed;
+            rb.linearVelocityX = -10;
+            sr.flipX = true;
+            animator.SetInteger("Estado",1);
         }
-
-        rb.linearVelocity = new Vector2(moveX, rb.linearVelocity.y);
+    }
+    void Saltar()
+    {
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            rb.linearVelocityY = 10;
+        }
     }
 }
