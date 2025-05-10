@@ -171,7 +171,8 @@ public class PlayerController : MonoBehaviour
         // --- Ejecutar salto ---
         if (jumpBufferCounter > 0f && coyoteTimeCounter > 0f)
         {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce); // Cambiado a rb.velocity
+            Debug.Log("Saltando...");
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             jumpBufferCounter = 0f;
         }
 
