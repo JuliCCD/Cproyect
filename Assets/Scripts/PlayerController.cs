@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Importa TextMeshPro
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -13,6 +13,12 @@ public class PlayerController : MonoBehaviour
     public Transform groundCheck;
     public LayerMask groundLayer;
 
+    public TextMeshProUGUI enemigosEliminadosText; // Texto para enemigos eliminados
+    public TextMeshProUGUI vidasRestantesText;    // Texto para vidas restantes
+
+    private int enemigosEliminados = 0; // Contador de enemigos eliminados
+    private int vidasRestantes = 3;     // Número de vidas restantes
+
     Rigidbody2D rb;
     SpriteRenderer sr;
     Animator animator;
@@ -23,6 +29,7 @@ public class PlayerController : MonoBehaviour
     private float defaultGravityScale = 1f;
     private bool puedeSaltar = true;
     private bool puedeLanzarKunai = true;
+
 
     [Header("Parámetros de salto")]
     public float jumpForce = 10f;
@@ -37,11 +44,9 @@ public class PlayerController : MonoBehaviour
     public float jumpBufferTime = 0.2f;
     private float jumpBufferCounter;
 
-    [SerializeField] private TextMeshProUGUI enemigosMuertosText;
-    [SerializeField] private TextMeshProUGUI vidasRestantesText;
+    private Text enemigosMuertosText;
 
-    private int enemigosEliminados = 0;
-    private int vidasRestantes = 3;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -52,13 +57,15 @@ public class PlayerController : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
 
-        // Busca los textos en la jerarquía
-        enemigosMuertosText = GameObject.Find("EnemigosMuertosText").GetComponent<TextMeshProUGUI>();
-        vidasRestantesText = GameObject.Find("VidasRestantesText").GetComponent<TextMeshProUGUI>();
+        enemigosMuertosText = GameObject.Find("EnemigoMuertosText").GetComponent<Text>();
 
         defaultGravityScale = rb.gravityScale;
 
-        ActualizarTextos();
+        enemigosMuertosText.text = "Nuevo TEXTO";
+
+        // Inicializar textos en pantalla
+        ActualizarTextoEnemigos();
+        ActualizarTextoVidas();
     }
 
     // Update is called once per frame
@@ -70,16 +77,20 @@ public class PlayerController : MonoBehaviour
         SetUpLanzarKunai();
     }
 
+
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Enemigo"))
         {
-            ZombieController zombie = collision.gameObject.GetComponent<ZombieController>();
-            Debug.Log($"Colision con Enemigo: ${zombie.puntosVida}");
-            Destroy(collision.gameObject);
+            // Reducir una vida al jugador
+            RecibirDaño();
 
+            // Incrementar el contador de enemigos eliminados
             enemigosEliminados++;
-            ActualizarTextos();
+            ActualizarTextoEnemigos();
+
+            // Destruir al enemigo
+            Destroy(collision.gameObject);
         }
     }
 
@@ -99,6 +110,7 @@ public class PlayerController : MonoBehaviour
             rb.gravityScale = defaultGravityScale;
         }
     }
+
 
     void SetupMoverseHorizontal() {
         
@@ -141,49 +153,46 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void SetupSalto()
-    {
-        // Verifica si el personaje está en el suelo
-        bool isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+    void SetupSalto() {
+        bool isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.1f, groundLayer);
 
         // --- Coyote Time ---
-        if (isGrounded)
-        {
+        if (isGrounded) {
             coyoteTimeCounter = coyoteTime;
         }
-        else
-        {
+        else {
             coyoteTimeCounter -= Time.deltaTime;
-            if (rb.linearVelocity.y > 5f)
+            if (rb.linearVelocityY > 5f)
                 animator.SetInteger("Estado", 3);
+            
         }
 
+        
+
+
         // --- Jump Buffer ---
-        if (Input.GetButtonDown("Jump"))
-        {
+        if (Input.GetButtonDown("Jump")) {
             jumpBufferCounter = jumpBufferTime;
         }
         else
-        {
             jumpBufferCounter -= Time.deltaTime;
-        }
 
         // --- Ejecutar salto ---
         if (jumpBufferCounter > 0f && coyoteTimeCounter > 0f)
         {
-            Debug.Log("Saltando...");
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            rb.linearVelocityY = jumpForce;
             jumpBufferCounter = 0f;
         }
 
         // --- Ajuste de gravedad para caída más rápida ---
-        if (rb.linearVelocity.y < 0)
+        if (rb.linearVelocityY < 0)
         {
             rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1f) * Time.deltaTime;
         }
-        else if (rb.linearVelocity.y > 0 && !Input.GetButton("Jump"))
+        else if (rb.linearVelocityY > 0 && !Input.GetButton("Jump"))
         {
             rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1f) * Time.deltaTime;
+            
         }
     }
 
@@ -197,22 +206,26 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void ActualizarTextoEnemigos()
+    {
+        enemigosEliminadosText.text = $"Enemigos Eliminados: {enemigosEliminados}";
+    }
+
+    void ActualizarTextoVidas()
+    {
+        vidasRestantesText.text = $"Vidas Restantes: {vidasRestantes}";
+    }
+
     public void RecibirDaño()
     {
         vidasRestantes--;
-        ActualizarTextos();
+        ActualizarTextoVidas();
 
         if (vidasRestantes <= 0)
         {
             Debug.Log("Game Over");
-            // Aquí puedes implementar lógica para reiniciar el nivel o mostrar pantalla de Game Over
+            // Aquí puedes implementar la lógica de fin del juego
         }
-    }
-
-    private void ActualizarTextos()
-    {
-        enemigosMuertosText.text = $"Enemigos Eliminados: {enemigosEliminados}";
-        vidasRestantesText.text = $"Vidas Restantes: {vidasRestantes}";
     }
 
     // Visualiza el groundCheck en el editor
